@@ -14,13 +14,71 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
 
+    services:
+      artemis:
+        image: apache/activemq-artemis:latest-alpine
+        env:
+          ANONYMOUS_LOGIN: "true"
+        ports:
+          - 1883:1883
+        options: >-
+          --security-opt no-new-privileges:true
+
+      mosquitto:
+        image: eclipse-mosquitto:2
+        ports:
+          - 1884:1883
+        options: >-
+          --security-opt no-new-privileges:true
+
+      hivemq:
+        image: hivemq/hivemq-ce:latest
+        ports:
+          - 1886:1883
+        options: >-
+          --security-opt no-new-privileges:true
+
+      nanomq:
+        image: emqx/nanomq:latest
+        ports:
+          - 1887:1883
+        options: >-
+          --security-opt no-new-privileges:true
+
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup mosquitto config
+        run: |
+          mkdir -p docker
+          cat > docker/mosquitto.conf <<EOF
+          listener 1883
+          allow_anonymous true
+          EOF
+
+      - name: Copy mosquitto config
+        run: |
+          MOSQUITTO_ID=$(docker ps -q --filter "ancestor=eclipse-mosquitto:2")
+          echo "Mosquitto container: $MOSQUITTO_ID"
+          docker cp docker/mosquitto.conf $MOSQUITTO_ID:/mosquitto/config/mosquitto.conf
+          docker exec $MOSQUITTO_ID chmod 644 /mosquitto/config/mosquitto.conf
+
+      - name: Wait for brokers
+        run: |
+          echo "Waiting for brokers to be ready..."
+          sleep 15
+
+          # Test connections to brokers
+          for port in 1883 1884 1886 1887; do
+            nc -zv localhost $port || echo "Port $port not responding"
+          done
+
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --group dev
-      - run: uv run pytest --ignore=tests/test_broker.py --cov=src/fastmqtt --cov-report=xml
+      - run: uv run pytest --cov=src/fastmqtt --cov-report=xml
       - uses: codecov/codecov-action@v5
         with:
           files: coverage.xml
