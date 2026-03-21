@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.0.1-alpha.2 (2026-03-21)
+
+### Features
+
+- Rename to zmqtt
+  ([`4098df6`](https://github.com/faststream-community/FastMQTT/commit/4098df6a175f00f1c5deb3b903c10c9ec7373f8b))
+
+- Rename to zmqtt ([#8](https://github.com/faststream-community/FastMQTT/pull/8),
+  [`301b037`](https://github.com/faststream-community/FastMQTT/commit/301b0378710de925c284767fdb8e53fa91c9cbc5))
+
+
 ## v0.0.1-alpha.1 (2026-03-21)
 
 ### Chores
